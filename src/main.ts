@@ -1,7 +1,7 @@
 import "./style.css";
 
 const app: HTMLDivElement = document.querySelector("#app")!;
-app.innerHTML = '<canvas id="canvas"></canvas>';
+app.innerHTML = `<canvas id="canvas"></canvas>`;
 const gameName = "My glame";
 
 document.title = gameName;
