@@ -21,19 +21,20 @@ context.fillRect(0, 0, 300, 150);
 const clearB = document.querySelector<HTMLButtonElement>("#clear");
 
 clearB!.addEventListener("mousedown", () => {
+  lines = [];
   context.fillRect(0, 0, 300, 150);
 });
 
 let isDrawing = false;
 let x = 0;
 let y = 0;
-interface stroke {
+interface Stroke {
   x: number;
   y: number;
   offsetX: number;
   offsetY: number;
 }
-const lines: stroke[] = [];
+let lines: Stroke[] = [];
 
 canvas.addEventListener("mousedown", (e) => {
   x = e.offsetX;
@@ -46,7 +47,7 @@ canvas.addEventListener("mousemove", (e) => {
     createStroke(x, y, e.offsetX, e.offsetY);
     x = e.offsetX;
     y = e.offsetY;
-    drawStrokes(lines);
+    dispatchDrawEvent();
   }
 });
 window.addEventListener("mouseup", (e) => {
@@ -54,9 +55,14 @@ window.addEventListener("mouseup", (e) => {
     createStroke(x, y, e.offsetX, e.offsetY);
     x = 0;
     y = 0;
-    drawStrokes(lines);
+    dispatchDrawEvent();
     isDrawing = false;
   }
+});
+
+window.addEventListener("draw", (event: any) => {
+  const linesToDraw: Stroke[] = event.detail;
+  drawStrokes(linesToDraw);
 });
 
 function createStroke(
@@ -65,7 +71,7 @@ function createStroke(
   inOffsetX: number,
   inOffsetY: number,
 ) {
-  const line: stroke = {
+  const line: Stroke = {
     x: inX,
     y: inY,
     offsetX: inOffsetX,
@@ -73,7 +79,11 @@ function createStroke(
   };
   lines.push(line);
 }
-function drawStrokes(toDraw: stroke[]) {
+function dispatchDrawEvent() {
+  const drawEvent = new CustomEvent("draw", { detail: lines });
+  window.dispatchEvent(drawEvent);
+}
+function drawStrokes(toDraw: Stroke[]) {
   context.fillRect(0, 0, 300, 150);
   toDraw.forEach((line) => {
     drawLine(context, line.x, line.y, line.offsetX, line.offsetY);
