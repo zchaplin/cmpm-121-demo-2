@@ -5,6 +5,8 @@ app.innerHTML = `
     <canvas id="canvas"></canvas>
         <div>
             <button id="clear" type="button">Clear</button>
+            <button id="redo" type="button">Redo</button>
+            <button id="undo" type="button">Undo</button>
 `;
 const gameName = "My glame";
 
@@ -19,10 +21,26 @@ context.fillStyle = "green";
 context.fillRect(0, 0, 300, 150);
 
 const clearB = document.querySelector<HTMLButtonElement>("#clear");
+const undoB = document.querySelector<HTMLButtonElement>("#undo");
+const redoB = document.querySelector<HTMLButtonElement>("#redo");
+
+undoB!.addEventListener("mousedown", () => {
+  if (lines.length > 0) {
+    reLines.push(lines.pop()!);
+    dispatchDrawEvent();
+  }
+});
+redoB!.addEventListener("mousedown", () => {
+  if (reLines.length > 0) {
+    lines.push(reLines.pop()!);
+    dispatchDrawEvent();
+  }
+});
 
 clearB!.addEventListener("mousedown", () => {
   lines = [];
   context.fillRect(0, 0, 300, 150);
+  reLines = [];
 });
 
 let isDrawing = false;
@@ -35,11 +53,13 @@ interface Stroke {
   offsetY: number;
 }
 let lines: Stroke[] = [];
+let reLines: Stroke[] = [];
 
 canvas.addEventListener("mousedown", (e) => {
   x = e.offsetX;
   y = e.offsetY;
   isDrawing = true;
+  reLines = [];
 });
 
 canvas.addEventListener("mousemove", (e) => {
@@ -60,11 +80,6 @@ window.addEventListener("mouseup", (e) => {
   }
 });
 
-window.addEventListener("draw", (event: any) => {
-  const linesToDraw: Stroke[] = event.detail;
-  drawStrokes(linesToDraw);
-});
-
 function createStroke(
   inX: number,
   inY: number,
@@ -80,9 +95,14 @@ function createStroke(
   lines.push(line);
 }
 function dispatchDrawEvent() {
-  const drawEvent = new CustomEvent("draw", { detail: lines });
+  const drawEvent = new CustomEvent("draw");
   window.dispatchEvent(drawEvent);
 }
+
+window.addEventListener("draw", () => {
+  drawStrokes(lines);
+});
+
 function drawStrokes(toDraw: Stroke[]) {
   context.fillRect(0, 0, 300, 150);
   toDraw.forEach((line) => {
