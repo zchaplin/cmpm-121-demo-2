@@ -7,6 +7,8 @@ app.innerHTML = `
             <button id="clear" type="button">Clear</button>
             <button id="redo" type="button">Redo</button>
             <button id="undo" type="button">Undo</button>
+            <button id="thick" type="button">Thick Line</button>
+            <button id="thin" type="button">Thin Line</button>
 `;
 const gameName = "My glame";
 
@@ -23,6 +25,8 @@ context.fillRect(0, 0, 300, 150);
 const clearB = document.querySelector<HTMLButtonElement>("#clear");
 const undoB = document.querySelector<HTMLButtonElement>("#undo");
 const redoB = document.querySelector<HTMLButtonElement>("#redo");
+const thickB = document.querySelector<HTMLButtonElement>("#thick");
+const thinB = document.querySelector<HTMLButtonElement>("#thin");
 
 undoB!.addEventListener("mousedown", () => {
   if (allLines.length > 0) {
@@ -43,15 +47,21 @@ clearB!.addEventListener("mousedown", () => {
   reLines = [];
 });
 
+thickB!.addEventListener("mousedown", () => {
+  lineWidth = 3;
+});
+thinB!.addEventListener("mousedown", () => {
+  lineWidth = 1;
+});
 let isDrawing = false;
 let x = 0;
 let y = 0;
-
+let lineWidth = 1;
 let allLines: LineCommand[] = [];
 let reLines: LineCommand[] = [];
 let currentLineCommand: LineCommand | null;
 canvas.addEventListener("mousedown", (e) => {
-  currentLineCommand = new LineCommand();
+  currentLineCommand = new LineCommand(lineWidth);
   x = e.offsetX;
   y = e.offsetY;
   isDrawing = true;
@@ -100,14 +110,16 @@ function drawStrokes() {
 
 class LineCommand {
   private line: number[][];
-  constructor() {
+  private width: number;
+  constructor(width: number) {
     this.line = [];
+    this.width = width;
   }
   execute(context: CanvasRenderingContext2D) {
     for (const segment of this.line) {
       context.beginPath();
       context.strokeStyle = "black";
-      context.lineWidth = 1;
+      context.lineWidth = this.width;
       context.moveTo(segment[0], segment[1]);
       context.lineTo(segment[2], segment[3]);
       context.stroke();
