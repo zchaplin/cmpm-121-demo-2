@@ -47,11 +47,11 @@ let isDrawing = false;
 let x = 0;
 let y = 0;
 
-let allLines: number[][][] = [];
-let currentLine: number[][] = [];
-let reLines: number[][][] = [];
-
+let allLines: LineCommand[] = [];
+let reLines: LineCommand[] = [];
+let currentLineCommand: LineCommand | null;
 canvas.addEventListener("mousedown", (e) => {
+  currentLineCommand = new LineCommand();
   x = e.offsetX;
   y = e.offsetY;
   isDrawing = true;
@@ -60,7 +60,7 @@ canvas.addEventListener("mousedown", (e) => {
 
 canvas.addEventListener("mousemove", (e) => {
   if (isDrawing) {
-    createStroke(x, y, e.offsetX, e.offsetY);
+    currentLineCommand!.addSegment(x, y, e.offsetX, e.offsetY);
     x = e.offsetX;
     y = e.offsetY;
     dispatchDrawEvent();
@@ -68,26 +68,17 @@ canvas.addEventListener("mousemove", (e) => {
 });
 window.addEventListener("mouseup", (e) => {
   if (isDrawing) {
-    createStroke(x, y, e.offsetX, e.offsetY);
+    currentLineCommand!.addSegment(x, y, e.offsetX, e.offsetY);
     endStroke();
     dispatchDrawEvent();
     isDrawing = false;
   }
 });
 function endStroke() {
-  allLines.push(currentLine);
-  currentLine = [];
+  allLines.push(currentLineCommand!);
+  currentLineCommand = null;
 }
-function createStroke(
-  inX: number,
-  inY: number,
-  inOffsetX: number,
-  inOffsetY: number,
-) {
-  let segment: number[] = [inX, inY, inOffsetX, inOffsetY];
-  //console.log(segment);
-  currentLine.push(segment);
-}
+
 function dispatchDrawEvent() {
   const drawEvent = new CustomEvent("draw");
   window.dispatchEvent(drawEvent);
@@ -100,29 +91,36 @@ window.addEventListener("draw", () => {
 function drawStrokes() {
   context.fillRect(0, 0, 300, 150);
   allLines.forEach((line) => {
-    drawLine(context, line);
+    line.execute(context);
   });
-  drawLine(context, currentLine);
+  if (currentLineCommand != null) {
+    currentLineCommand!.execute(context);
+  }
 }
-function drawLine(context: CanvasRenderingContext2D, line: number[][]) {
-  line.forEach((segment) => {
-    drawSegment(context, segment[0], segment[1], segment[2], segment[3]);
-  });
-}
-function drawSegment(
-  context: CanvasRenderingContext2D,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-) {
-  context.beginPath();
-  context.strokeStyle = "black";
-  context.lineWidth = 1;
-  context.moveTo(x1, y1);
-  context.lineTo(x2, y2);
-  context.stroke();
-  context.closePath();
+
+class LineCommand {
+  private line: number[][];
+  constructor() {
+    this.line = [];
+  }
+  execute(context: CanvasRenderingContext2D) {
+    for (const segment of this.line) {
+      context.beginPath();
+      context.strokeStyle = "black";
+      context.lineWidth = 1;
+      context.moveTo(segment[0], segment[1]);
+      context.lineTo(segment[2], segment[3]);
+      context.stroke();
+      context.closePath();
+    }
+  }
+  addSegment(inX: number, inY: number, inOffsetX: number, inOffsetY: number) {
+    {
+      const segment: number[] = [inX, inY, inOffsetX, inOffsetY];
+      //console.log(segment);
+      this.line.push(segment);
+    }
+  }
 }
 const header = document.createElement("h1");
 header.innerHTML = gameName;
