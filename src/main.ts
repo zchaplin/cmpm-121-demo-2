@@ -94,7 +94,7 @@ function drawStrokes() {
     line.execute(context);
   });
   if (currentLineCommand != null) {
-    currentLineCommand!.execute(context);
+    currentLineCommand.execute(context);
   }
 }
 
