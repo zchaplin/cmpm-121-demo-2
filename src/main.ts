@@ -25,20 +25,20 @@ const undoB = document.querySelector<HTMLButtonElement>("#undo");
 const redoB = document.querySelector<HTMLButtonElement>("#redo");
 
 undoB!.addEventListener("mousedown", () => {
-  if (lines.length > 0) {
-    reLines.push(lines.pop()!);
+  if (allLines.length > 0) {
+    reLines.push(allLines.pop()!);
     dispatchDrawEvent();
   }
 });
 redoB!.addEventListener("mousedown", () => {
   if (reLines.length > 0) {
-    lines.push(reLines.pop()!);
+    allLines.push(reLines.pop()!);
     dispatchDrawEvent();
   }
 });
 
 clearB!.addEventListener("mousedown", () => {
-  lines = [];
+  allLines = [];
   context.fillRect(0, 0, 300, 150);
   reLines = [];
 });
@@ -46,14 +46,10 @@ clearB!.addEventListener("mousedown", () => {
 let isDrawing = false;
 let x = 0;
 let y = 0;
-interface Stroke {
-  x: number;
-  y: number;
-  offsetX: number;
-  offsetY: number;
-}
-let lines: Stroke[] = [];
-let reLines: Stroke[] = [];
+
+let allLines: number[][][] = [];
+let currentLine: number[][] = [];
+let reLines: number[][][] = [];
 
 canvas.addEventListener("mousedown", (e) => {
   x = e.offsetX;
@@ -73,26 +69,24 @@ canvas.addEventListener("mousemove", (e) => {
 window.addEventListener("mouseup", (e) => {
   if (isDrawing) {
     createStroke(x, y, e.offsetX, e.offsetY);
-    x = 0;
-    y = 0;
+    endStroke();
     dispatchDrawEvent();
     isDrawing = false;
   }
 });
-
+function endStroke() {
+  allLines.push(currentLine);
+  currentLine = [];
+}
 function createStroke(
   inX: number,
   inY: number,
   inOffsetX: number,
   inOffsetY: number,
 ) {
-  const line: Stroke = {
-    x: inX,
-    y: inY,
-    offsetX: inOffsetX,
-    offsetY: inOffsetY,
-  };
-  lines.push(line);
+  let segment: number[] = [inX, inY, inOffsetX, inOffsetY];
+  //console.log(segment);
+  currentLine.push(segment);
 }
 function dispatchDrawEvent() {
   const drawEvent = new CustomEvent("draw");
@@ -100,16 +94,22 @@ function dispatchDrawEvent() {
 }
 
 window.addEventListener("draw", () => {
-  drawStrokes(lines);
+  drawStrokes();
 });
 
-function drawStrokes(toDraw: Stroke[]) {
+function drawStrokes() {
   context.fillRect(0, 0, 300, 150);
-  toDraw.forEach((line) => {
-    drawLine(context, line.x, line.y, line.offsetX, line.offsetY);
+  allLines.forEach((line) => {
+    drawLine(context, line);
+  });
+  drawLine(context, currentLine);
+}
+function drawLine(context: CanvasRenderingContext2D, line: number[][]) {
+  line.forEach((segment) => {
+    drawSegment(context, segment[0], segment[1], segment[2], segment[3]);
   });
 }
-function drawLine(
+function drawSegment(
   context: CanvasRenderingContext2D,
   x1: number,
   y1: number,
