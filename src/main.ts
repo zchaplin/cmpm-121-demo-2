@@ -16,6 +16,52 @@ document.title = gameName;
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 
+class CursorCommand {
+  private x: number;
+  private y: number;
+
+  private customCursor = document.createElement("div");
+
+  constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+    this.customCursor.style.position = "absolute";
+    this.customCursor.style.width = "2px"; // Adjust the size as needed
+    this.customCursor.style.height = "2px"; // Adjust the size as needed
+    this.customCursor.style.border = "1px solid red"; // Adjust the color and border thickness
+    this.customCursor.style.borderRadius = "50%"; // Make it circular
+    this.customCursor.style.pointerEvents = "none";
+  }
+  updatePos(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+  execute() {
+    this.customCursor.style.left = this.x - 2 + "px";
+    this.customCursor.style.top = this.y - 2 + "px";
+    document.body.appendChild(this.customCursor);
+  }
+  turnOff() {
+    this.customCursor.style.border = "";
+  }
+  turnOn() {
+    this.customCursor.style.border = "2px solid red";
+  }
+  thin() {
+    this.customCursor.style.width = "2px"; // Adjust the size as needed
+    this.customCursor.style.height = "2px";
+  }
+  thick() {
+    this.customCursor.style.width = "6px"; // Adjust the size as needed
+    this.customCursor.style.height = "6px";
+  }
+}
+
+let cursor: CursorCommand = new CursorCommand(0, 0);
+window.addEventListener("tool", (e) => {
+  console.log("popo");
+  cursor.execute();
+});
 const context = canvas.getContext("2d")!;
 
 context.fillStyle = "green";
@@ -49,9 +95,11 @@ clearB!.addEventListener("mousedown", () => {
 
 thickB!.addEventListener("mousedown", () => {
   lineWidth = 3;
+  cursor.thick();
 });
 thinB!.addEventListener("mousedown", () => {
   lineWidth = 1;
+  cursor.thin();
 });
 let isDrawing = false;
 let x = 0;
@@ -66,6 +114,8 @@ canvas.addEventListener("mousedown", (e) => {
   y = e.offsetY;
   isDrawing = true;
   reLines = [];
+  cursor.turnOff();
+  dispatchToolEvent();
 });
 
 canvas.addEventListener("mousemove", (e) => {
@@ -74,14 +124,18 @@ canvas.addEventListener("mousemove", (e) => {
     x = e.offsetX;
     y = e.offsetY;
     dispatchDrawEvent();
+  } else {
+    cursor.updatePos(e.pageX, e.pageY);
+    dispatchToolEvent();
   }
 });
 window.addEventListener("mouseup", (e) => {
   if (isDrawing) {
-    currentLineCommand!.addSegment(x, y, e.offsetX, e.offsetY);
+    //currentLineCommand!.addSegment(x, y, e.offsetX, e.offsetY);
     endStroke();
     dispatchDrawEvent();
     isDrawing = false;
+    cursor.turnOn();
   }
 });
 function endStroke() {
@@ -93,11 +147,18 @@ function dispatchDrawEvent() {
   const drawEvent = new CustomEvent("draw");
   window.dispatchEvent(drawEvent);
 }
+function dispatchToolEvent() {
+  console.log("bobie");
+  const toolEvent = new CustomEvent("tool");
+  window.dispatchEvent(toolEvent);
+}
 
 window.addEventListener("draw", () => {
   drawStrokes();
 });
-
+window.addEventListener("tool", () => {
+  drawStrokes();
+});
 function drawStrokes() {
   context.fillRect(0, 0, 300, 150);
   allLines.forEach((line) => {
