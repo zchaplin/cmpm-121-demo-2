@@ -56,7 +56,7 @@ class StickerCommand {
       context.font = `${"40px"} ${"Arial"}`;
       context.fillText(this.stick, this.x, this.y);
     }
-    context.fillStyle = "green";
+    context.fillStyle = "white";
   }
   turnOff() {
     this.stick = "";
@@ -109,7 +109,7 @@ class CursorCommand {
     this.customCursor.style.border = "";
   }
   turnOn() {
-    this.customCursor.style.border = "2px solid red";
+    this.customCursor.style.border = "2px solid black";
   }
   thin() {
     this.customCursor.style.width = "2px"; // Adjust the size as needed
@@ -130,7 +130,7 @@ window.addEventListener("stick", () => {
 });
 const context = canvas.getContext("2d")!;
 
-context.fillStyle = "green";
+context.fillStyle = "white";
 
 context.fillRect(0, 0, 300, 150);
 
