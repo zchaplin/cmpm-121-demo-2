@@ -12,6 +12,7 @@ app.innerHTML = `
             <button id="sticker1" type="button">🐱</button>
             <button id="sticker2" type="button">🪂</button>
             <button id="sticker3" type="button">🏂</button>
+            <button id="customStick" type="button">Custom</button>
 `;
 const gameName = "My glame";
 
@@ -23,7 +24,7 @@ class StickerCommand {
   private x: number;
   private y: number;
   private stick: string;
-  private status: boolean = false;
+  private status: boolean;
   constructor(x: number, y: number, stick: string, status: boolean) {
     this.x = x;
     this.y = y;
@@ -35,11 +36,13 @@ class StickerCommand {
     this.y = y;
   }
   execute(context: CanvasRenderingContext2D) {
+    context.fillStyle = "black";
     if (this.status) {
       console.log(this.x, this.y);
       context.font = `${"40px"} ${"Arial"}`;
       context.fillText(this.stick, this.x, this.y);
     }
+    context.fillStyle = "green";
   }
   turnOff() {
     this.stick = "";
@@ -125,8 +128,15 @@ const thinB = document.querySelector<HTMLButtonElement>("#thin");
 const sticker1B = document.querySelector<HTMLButtonElement>("#sticker1");
 const sticker2B = document.querySelector<HTMLButtonElement>("#sticker2");
 const sticker3B = document.querySelector<HTMLButtonElement>("#sticker3");
+const customStick = document.querySelector<HTMLButtonElement>("#customStick");
 
-let sticker: StickerCommand = new StickerCommand(0, 0, "", false);
+const sticker: StickerCommand = new StickerCommand(0, 0, "", false);
+
+customStick!.addEventListener("mousedown", () => {
+  cursor.turnOff();
+  sticker.turnOn(prompt("Enter The text you wish to use")!);
+  isDrawing = false;
+});
 
 sticker1B!.addEventListener("mousedown", () => {
   cursor.turnOff();
@@ -181,13 +191,15 @@ let allLines: (LineCommand | StickerCommand)[] = [];
 let reLines: (LineCommand | StickerCommand)[] = [];
 let currentLineCommand: LineCommand | null;
 canvas.addEventListener("mousedown", (e) => {
-  currentLineCommand = new LineCommand(lineWidth);
-  x = e.offsetX;
-  y = e.offsetY;
-  isDrawing = true;
-  reLines = [];
-  cursor.turnOff();
-  dispatchToolEvent();
+  if (!sticker.isOn()) {
+    currentLineCommand = new LineCommand(lineWidth);
+    x = e.offsetX;
+    y = e.offsetY;
+    isDrawing = true;
+    reLines = [];
+    cursor.turnOff();
+    dispatchToolEvent();
+  }
   dispatchStickEvent();
   if (sticker.isOn()) {
     placeSticker();
