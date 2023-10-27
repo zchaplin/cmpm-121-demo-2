@@ -13,6 +13,20 @@ app.innerHTML = `
             <button id="sticker2" type="button">🪂</button>
             <button id="sticker3" type="button">🏂</button>
             <button id="customStick" type="button">Custom</button>
+            <button id="save" type="button">Save Image</button>
+            <div>
+            <label for="redSlider">Red:</label>
+            <input type="range" id="redSlider" min="0" max="255" value="0">
+        </div>
+        <div>
+            <label for="greenSlider">Green:</label>
+            <input type="range" id="greenSlider" min="0" max="255" value="0">
+        </div>
+        <div>
+            <label for="blueSlider">Blue:</label>
+            <input type="range" id="blueSlider" min="0" max="255" value="0">
+        </div>
+    </div>
 `;
 const gameName = "My glame";
 
@@ -129,8 +143,30 @@ const sticker1B = document.querySelector<HTMLButtonElement>("#sticker1");
 const sticker2B = document.querySelector<HTMLButtonElement>("#sticker2");
 const sticker3B = document.querySelector<HTMLButtonElement>("#sticker3");
 const customStick = document.querySelector<HTMLButtonElement>("#customStick");
+const saveB = document.querySelector<HTMLButtonElement>("#save");
+
+const redSlider = document.getElementById("redSlider") as HTMLInputElement;
+const greenSlider = document.getElementById("greenSlider") as HTMLInputElement;
+const blueSlider = document.getElementById("blueSlider") as HTMLInputElement;
+
+let redValue = redSlider.value;
+let greenValue = greenSlider.value;
+let blueValue = blueSlider.value;
 
 const sticker: StickerCommand = new StickerCommand(0, 0, "", false);
+
+saveB!.addEventListener("mousedown", () => {
+  const tmpCanvas = document.createElement("canvas");
+  tmpCanvas.width = canvas.width * 4;
+  tmpCanvas.height = canvas.height * 4;
+  const tmpCtx = tmpCanvas.getContext("2d");
+  tmpCtx!.scale(4, 4);
+  drawStrokes(tmpCtx!);
+  const anchor = document.createElement("a");
+  anchor.href = tmpCanvas.toDataURL("image/png");
+  anchor.download = "sketchpad.png";
+  anchor.click();
+});
 
 customStick!.addEventListener("mousedown", () => {
   cursor.turnOff();
@@ -192,7 +228,13 @@ let reLines: (LineCommand | StickerCommand)[] = [];
 let currentLineCommand: LineCommand | null;
 canvas.addEventListener("mousedown", (e) => {
   if (!sticker.isOn()) {
-    currentLineCommand = new LineCommand(lineWidth);
+    redValue = redSlider.value;
+    greenValue = greenSlider.value;
+    blueValue = blueSlider.value;
+    currentLineCommand = new LineCommand(
+      lineWidth,
+      `rgb(${redValue},${greenValue},${blueValue})`,
+    );
     x = e.offsetX;
     y = e.offsetY;
     isDrawing = true;
@@ -241,6 +283,7 @@ function dispatchDrawEvent() {
   const drawEvent = new CustomEvent("draw");
   window.dispatchEvent(drawEvent);
 }
+
 function dispatchToolEvent() {
   const toolEvent = new CustomEvent("tool");
   window.dispatchEvent(toolEvent);
@@ -259,7 +302,16 @@ window.addEventListener("tool", () => {
   drawStrokes();
 });
 
-function drawStrokes() {
+function drawStrokes(ctx?: CanvasRenderingContext2D) {
+  if (ctx) {
+    context.fillRect(0, 0, 300, 150);
+    allLines.forEach((line) => {
+      line.execute(ctx);
+    });
+    if (currentLineCommand != null) {
+      currentLineCommand.execute(ctx);
+    }
+  }
   context.fillRect(0, 0, 300, 150);
   allLines.forEach((line) => {
     line.execute(context);
@@ -270,16 +322,18 @@ function drawStrokes() {
 }
 
 class LineCommand {
+  private color: string;
   private line: number[][];
   private width: number;
-  constructor(width: number) {
+  constructor(width: number, color: string) {
     this.line = [];
     this.width = width;
+    this.color = color;
   }
   execute(context: CanvasRenderingContext2D) {
     for (const segment of this.line) {
       context.beginPath();
-      context.strokeStyle = "black";
+      context.strokeStyle = this.color;
       context.lineWidth = this.width;
       context.moveTo(segment[0], segment[1]);
       context.lineTo(segment[2], segment[3]);
