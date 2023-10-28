@@ -100,7 +100,7 @@ class CursorCommand {
     this.x = x;
     this.y = y;
   }
-  //Oooh Spooky Comment
+  //Oooh Spookier Comment
   execute() {
     this.customCursor.style.left = this.x - 2 + "px";
     this.customCursor.style.top = this.y - 2 + "px";
